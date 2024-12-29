@@ -12,24 +12,24 @@ $x_{k,i,t}$ is a binary variable that is 1 if the $i$-th task of agent $k$ is co
 ### Objective Function
 We want to minimize the maximum average task completion cost among all agents, wich is defined for agent $k$ as:
 
-$$ \bar{C_k} = \frac{1}{N_k} \sum_{i=1}^{N_k} \sum_{t=1}^{T} t \cdot x_{k,i,t}. $$
+$$ \bar{C_k} = \frac{1}{N_k} \sum_{i=1}^{N_k} \sum_{t=1}^{T} t \cdot x_{k,i,t} $$
 
 where $N_k$ is the number of tasks assigned to agent $k$.
 
 We introduce an auxiliary variable $z$ representing the maximum average cost among all agents. The goal is to minimize $z$.
 
-$$ \min z. $$
+$$ \min z $$
 
 ### Constraints
 #### Task Assignment Constraints
-$$ \sum_{t=1}^{T} x_{k,i,t} = 1 \quad \forall k = 1, \ldots, K; \forall i = 1, \ldots, N_k. $$
+$$ \sum_{t=1}^{T} x_{k,i,t} = 1 \quad \forall k = 1, \ldots, K; \forall i = 1, \ldots, N_k $$
 #### Precedence Constraints
 $$x_{k,i,t} \leq \sum_{\tau = 1}^{t} x_{k,j,\tau} \quad \forall  k = 1, \ldots, K; \forall i = 1, \ldots, N_k; \forall t = 1, \ldots, T; \forall j \in Dep_{k,i} $$
 
 where $Dep_{k,i}$ is the set of tasks that must be completed before the task $i$ for agent $k$.
 #### Capacity Constraints
-$$\sum_{k=1}^{K} \sum_{i=1}^{N_k} d_{k,i} \cdot x_{k,i,t} \leq c_t \quad \forall t = 1, \ldots, T.$$
+$$\sum_{k=1}^{K} \sum_{i=1}^{N_k} d_{k,i} \cdot x_{k,i,t} \leq c_t \quad \forall t = 1, \ldots, T$$
 #### Constraints on Maximum Average Cost
-$$\sum_{i=1}^{N_k} \sum_{t=1}^{T} t \cdot x_{k,i,t} \leq N_k \cdot z \quad \forall k = 1, \ldots, K.$$
+$$\sum_{i=1}^{N_k} \sum_{t=1}^{T} t \cdot x_{k,i,t} \leq N_k \cdot z \quad \forall k = 1, \ldots, K$$
 #### Constraints for binary variables
-$$x_{k,i,t} \in \\{0, 1\\} \quad \forall k = 1, \ldots, K; \forall i = 1, \ldots, N_k; \forall t = 1, \ldots, T.$$
+$$x_{k,i,t} \in \\{0, 1\\} \quad \forall k = 1, \ldots, K; \forall i = 1, \ldots, N_k; \forall t = 1, \ldots, T$$
