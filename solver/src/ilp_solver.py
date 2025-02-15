@@ -88,18 +88,17 @@ def minimize_max_avg_cost(K, N, T, c, task_sizes, dependencies):
     return solution
 
 
-# Example Usage
-resources = [15, 8, 1]  # Resource capacities at each time t
+resources = [15, 8, 5]  # Resource capacities per time slot.
+    
 agent_tasks = [
-    # Agent 0
-    [1, 5, 1, 1, 1, 1, 1, 1], 
-    # Agent 1 
-    [5, 6, 1],
+    [1, 5, 1, 1, 1, 1, 1, 1],  # Agent 0 task sizes.
+    [5, 6, 1],                # Agent 1 task sizes.
 ]
+
 dependencies = [
-    # Dependencies for agent 0's tasks
-    [{}, {}, {}, {0, 1, 2}, {}, {}, {3, 4, 5}, {6}],  
-    # Dependencies for agent 1's tasks
+    # Agent 0 dependencies.
+    [{}, {}, {}, {0, 1, 2}, {}, {}, {3, 4, 5}, {6}],
+    # Agent 1 dependencies.
     [{}, {0}, {1}],
 ]
 
