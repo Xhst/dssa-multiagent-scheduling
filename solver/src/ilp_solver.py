@@ -1,17 +1,18 @@
 import pulp
 
-def minimize_max_avg_cost(K, N, T, c, task_sizes, dependencies):
+def minimize_max_avg_cost(c, task_sizes, dependencies):
     """
     Parameters:
-        K: Number of agents (int)
-        N: List with number of tasks for each agent (list of int)
-        T: Number of time instants (int)
         c: List of resource capacities at each time t (list of int)
         task_sizes: List of lists, where task_sizes[k][i] is the size of task i for agent k
         dependencies: List of lists of sets, where dependencies[k][i] is the set of indices
                       of tasks that must be completed before task i for agent k
     """
     
+    K = len(task_sizes)
+    N = [len(tasks) for tasks in task_sizes]
+    T = len(c)
+
     # Create the problem
     problem = pulp.LpProblem("Minimize_Max_Avg_Cost", pulp.LpMinimize)
 
@@ -68,7 +69,7 @@ def minimize_max_avg_cost(K, N, T, c, task_sizes, dependencies):
         problem += z >= avg_cost_k
 
     # Solve the problem
-    problem.solve()
+    problem.solve(pulp.PULP_CBC_CMD(msg=0))
 
     # Output results
     status = pulp.LpStatus[problem.status]
@@ -76,41 +77,14 @@ def minimize_max_avg_cost(K, N, T, c, task_sizes, dependencies):
         print(f"Solver did not find an optimal solution: {status}")
         return None
 
-    solution = {
-        "z": pulp.value(z),
-        "x": {
-            (k, i, t): pulp.value(x[k, i, t])
-            for k in range(K)
-            for i in range(N[k])
-            for t in range(1, T + 1)
-        },
-    }
-    return solution
+    schedule = [[] for _ in range(T)]  # Create an empty schedule for each time slot
+
+    for (k, i, t), value in x.items():
+        if pulp.value(value) == 1:
+            schedule[t - 1].append([k, i])
+
+    return schedule
 
 
-resources = [15, 8, 5]  # Resource capacities per time slot.
-    
-agent_tasks = [
-    [1, 5, 1, 1, 1, 1, 1, 1],  # Agent 0 task sizes.
-    [5, 6, 1],                # Agent 1 task sizes.
-]
 
-dependencies = [
-    # Agent 0 dependencies.
-    [{}, {}, {}, {0, 1, 2}, {}, {}, {3, 4, 5}, {6}],
-    # Agent 1 dependencies.
-    [{}, {0}, {1}],
-]
 
-K = len(agent_tasks)
-N = [len(tasks) for tasks in agent_tasks]
-T = len(resources)
-
-solution = minimize_max_avg_cost(K, N, T, resources, agent_tasks, dependencies)
-
-if solution:
-    print(f"Minimum maximum average cost: {solution['z']}")
-    print("Task execution schedule:")
-    for (k, i, t), value in solution["x"].items():
-        if value == 1:
-            print(f"Agent {k}, Task {i}, Time {t}")
