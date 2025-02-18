@@ -1,0 +1,22 @@
+.rectangle-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rectangle {
+  position: relative;
+  border: 1px solid #000;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; 
+}
+
+.inner-rectangle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
