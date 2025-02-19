@@ -190,7 +190,7 @@ function App() {
         <div className="mb-3">
           <div className="row">
             <div className="col-6">
-              <label>Max Iteration</label>
+              <label>Max Iterations</label>
               <input type="number" className="form-control" value={parameters.maxIterations} onChange={(e) => handleParameterChange("maxIterations", Number(e.target.value))} />
             </div>
             <div className="col-6">
