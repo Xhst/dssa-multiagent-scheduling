@@ -15,7 +15,14 @@ export type Task = {
   dependencies: number[];
 }
 
-export type SolvingMethod = "greedy" | "ilp" | "local_search | simulated_annealing";
+export type SolvingMethod = "greedy" | "ilp" | "local_search" | "simulated_annealing";
+
+export type HeuristicParams = {
+  maxIterations?: number;
+  maxMoves?: number;
+  temperature?: number;
+  coolingRate?: number;
+};
 
 export type Solution = {
   method: string,
