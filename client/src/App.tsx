@@ -4,13 +4,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import ResourceComp from "./components/Resource";
 import AgentComp from "./components/Agent";
-import { Agent, Resource, SolvingMethod, Solution } from "./types";
+import { Agent, Resource, SolvingMethod, Solution, HeuristicParams } from "./types";
 
 const url = "http://localhost:8000";
 
-async function solve(resources: Resource[], agents: Agent[], solvingMethod: SolvingMethod = "greedy") {
+async function solve(resources: Resource[], agents: Agent[], solvingMethod: SolvingMethod = "greedy", parameters: HeuristicParams = {}) {
   try {
-    const data = JSON.stringify({ resources, agents });
+    const data = JSON.stringify({ resources, agents, parameters });
     const response = await axios.post(`${url}/api/schedule/${solvingMethod}`, data, {
       headers: {
           'Content-Type': 'application/json'
@@ -30,10 +30,16 @@ function App() {
   const [solvingMethod, setSolvingMethod] = useState<SolvingMethod>("greedy");
   const [solution, setSolution] = useState<Solution | null>(null);
   const [loading, setLoading] = useState(false);
+  const [parameters, setParameters] = useState<HeuristicParams>({
+    maxIterations: 1000,
+    maxMoves: 100,
+    temperature: 1,
+    coolingRate: 0.99,
+  });
 
   const handleSolve = async () => {
     setLoading(true);
-    const response = await solve(resources, agents, solvingMethod);
+    const response = await solve(resources, agents, solvingMethod, parameters);
     if (response && response.solution && response.tasks) {
       const sol: Solution = {
         method: response.method,
@@ -47,6 +53,10 @@ function App() {
       setSolution(sol);
       setLoading(false);
     }
+  };
+
+  const handleParameterChange = (param: keyof HeuristicParams, value: number) => {
+    setParameters((prev) => ({ ...prev, [param]: value }));
   };
 
   useEffect(() => {
@@ -175,6 +185,34 @@ function App() {
           )}
         </button>
       </div>
+
+      {(solvingMethod == "local_search" || solvingMethod == "simulated_annealing") && (
+        <div className="mb-3">
+          <div className="row">
+            <div className="col-6">
+              <label>Max Iteration</label>
+              <input type="number" className="form-control" value={parameters.maxIterations} onChange={(e) => handleParameterChange("maxIterations", Number(e.target.value))} />
+            </div>
+            <div className="col-6">
+              <label>Max Moves Without Improvement</label>
+              <input type="number" className="form-control" value={parameters.maxMoves} onChange={(e) => handleParameterChange("maxMoves", Number(e.target.value))} />
+            </div>
+          {solvingMethod === "simulated_annealing" && (
+            <>
+              <div className="col-6">
+                <label>Temperature</label>
+                <input type="number" className="form-control" value={parameters.temperature} onChange={(e) => handleParameterChange("temperature", Number(e.target.value))} />
+              </div>
+              <div className="col-6">
+                <label>Cooling Rate</label>
+                <input type="number" className="form-control" value={parameters.coolingRate} onChange={(e) => handleParameterChange("coolingRate", Number(e.target.value))} />
+              </div>
+            </>
+          )}
+        </div>
+        </div>
+      )}
+
       <hr className="my-5" />
       {solution ? (
         <>
