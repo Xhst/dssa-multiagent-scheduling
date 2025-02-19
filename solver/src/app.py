@@ -19,9 +19,17 @@ class Resource(BaseModel):
     id: int
     size: int
 
+class HeuristicParams(BaseModel):
+    maxIterations: int = 1000
+    maxMoves: int = 100
+    temperature: float = 1.0
+    coolingRate: float = 0.99
+
 class ScheduleRequest(BaseModel):
     resources: list[Resource]
     agents: list[Agent]
+    parameters: HeuristicParams | None = None 
+
 
 
 def convert_input(request: ScheduleRequest):
@@ -88,39 +96,58 @@ def get_greedy_schedule(request: ScheduleRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/schedule/local_search")
-def get_heuristic_schedule(request: ScheduleRequest):
+def get_local_search_schedule(request: ScheduleRequest):
     try:
         resources, agent_tasks, dependencies, agent_colors = convert_input(request)
+        params = request.parameters or HeuristicParams()
+
         start_time = time.time()
-        solution = local_search(resources, agent_tasks, dependencies)
+        solution = local_search(
+            resources, 
+            agent_tasks, 
+            dependencies, 
+            max_iter=params.maxIterations, 
+            candidate_moves=params.maxMoves, 
+        )
         elapsed_time = time.time() - start_time
+
         return {
             "method": "Local Search",
             "solution": solution,
             "z": evaluate_max_agent_cost(solution, len(agent_tasks)),
             "time": elapsed_time,
             "colors": agent_colors,
-            "resources" : resources,
+            "resources": resources,
             "tasks": agent_tasks
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
 @app.post("/api/schedule/simulated_annealing")
-def get_heuristic_schedule(request: ScheduleRequest):
+def get_simulated_annealing_schedule(request: ScheduleRequest):
     try:
         resources, agent_tasks, dependencies, agent_colors = convert_input(request)
+        params = request.parameters or HeuristicParams()
+
         start_time = time.time()
-        solution = simulated_annealing(resources, agent_tasks, dependencies)
+        solution = simulated_annealing(
+            resources, 
+            agent_tasks, 
+            dependencies, 
+            max_iter=params.maxIterations, 
+            candidate_moves=params.maxMoves, 
+            initial_temperature=params.temperature, 
+            cooling_rate=params.coolingRate
+        )
         elapsed_time = time.time() - start_time
+
         return {
             "method": "Simulated Annealing",
             "solution": solution,
             "z": evaluate_max_agent_cost(solution, len(agent_tasks)),
             "time": elapsed_time,
             "colors": agent_colors,
-            "resources" : resources,
+            "resources": resources,
             "tasks": agent_tasks
         }
     except Exception as e:
