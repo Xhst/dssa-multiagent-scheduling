@@ -1,27 +1,116 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import ResourceComp from "./components/Resource";
 import AgentComp from "./components/Agent";
 import { Agent, Resource, SolvingMethod, Solution, HeuristicParams } from "./types";
+import { greedySchedule, localSearch, simulatedAnnealing, evaluateMaxAgentCost } from "./heuristic_solver";
+import axios from "axios";
 
 const url = "http://localhost:8000";
 
-async function solve(resources: Resource[], agents: Agent[], solvingMethod: SolvingMethod = "greedy", parameters: HeuristicParams = {}) {
-  try {
-    const data = JSON.stringify({ resources, agents, parameters });
-    const response = await axios.post(`${url}/api/schedule/${solvingMethod}`, data, {
-      headers: {
-          'Content-Type': 'application/json'
-      }
-  });
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-  return null;
+async function solve(resources: Resource[], agents: Agent[], solvingMethod: SolvingMethod = "greedy", parameters: HeuristicParams = {}): Promise<Solution | null> {
+  
+  const res: number[] = resources.map((res) => res.size);
+  const agentTasks: number[][] = agents.map((agent) =>
+    agent.tasks.map((task) => task.size)
+  );
+  const agentColors: string[] = agents.map((agent) => agent.color);
+
+  const dependencies: Set<number>[][] = agents.map((agent) =>
+    agent.tasks.map((task) => new Set(task.dependencies))
+  );
+
+  let time = Date.now();
+  let schedule;
+
+  switch (solvingMethod) {
+
+    case "greedy":
+      schedule = greedySchedule(res, agentTasks, dependencies);
+      time = Date.now() - time;
+
+      return {
+        method: "Greedy",
+        solution: schedule as [[number, number][]],
+        z: evaluateMaxAgentCost(schedule, agentTasks.length),
+        time: time,
+        colors: agentColors,
+        resources: res,
+        tasks: agentTasks,
+      };
+
+    case "local_search":
+      schedule = localSearch(
+        res, 
+        agentTasks, 
+        dependencies, 
+        parameters.maxIterations,
+        parameters.maxMoves
+      );
+      time = Date.now() - time;
+
+      return {
+        method: "Local Search",
+        solution: schedule as [[number, number][]],
+        z: evaluateMaxAgentCost(schedule, agentTasks.length),
+        time: time,
+        colors: agentColors,
+        resources: res,
+        tasks: agentTasks,
+      };
+
+    case "simulated_annealing":
+      schedule = simulatedAnnealing(
+        res, 
+        agentTasks, 
+        dependencies,  
+        parameters.maxIterations,
+        parameters.maxMoves,
+        parameters.temperature,
+        parameters.coolingRate
+      );
+      time = Date.now() - time;
+
+      return {
+        method: "Simulated Annealing",
+        solution: schedule as [[number, number][]],
+        z: evaluateMaxAgentCost(schedule, agentTasks.length),
+        time: time,
+        colors: agentColors,
+        resources: res,
+        tasks: agentTasks,
+      };
+
+    case "ilp":
+      const data = JSON.stringify({ resources, agents, parameters });
+      return await axios.post(`${url}/api/schedule/${solvingMethod}`, data, {
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      }).then((response) => {
+        console.log(response.data);
+
+        time = Date.now() - time;
+
+        return {
+          method: "Integer Linear Programming",
+          solution: response.data.solution as [[number, number][]],
+          z: response.data.z,
+          time: time,
+          colors: agentColors,
+          resources: res,
+          tasks: agentTasks,
+        }
+      }).catch((error) => {
+        console.error(error);
+        return null;
+      });     
+       
+
+    default:
+      return null;
+    }
 }
 
 function App() {
@@ -39,17 +128,8 @@ function App() {
 
   const handleSolve = async () => {
     setLoading(true);
-    const response = await solve(resources, agents, solvingMethod, parameters);
-    if (response && response.solution && response.tasks) {
-      const sol: Solution = {
-        method: response.method,
-        solution: response.solution,
-        z: response.z,
-        time: response.time,
-        colors: agents.map((agent) => agent.color),
-        resources: resources.map((resource) => resource.size),
-        tasks: response.tasks,
-      };
+    let sol = await solve(resources, agents, solvingMethod, parameters);
+    if (sol) {
       setSolution(sol);
       setLoading(false);
     }
