@@ -33,3 +33,9 @@ $$\sum_{k=1}^{K} \sum_{i=1}^{N_k} d_{k,i} \cdot x_{k,i,t} \leq c_t \quad \forall
 $$\sum_{i=1}^{N_k} \sum_{t=1}^{T} t \cdot x_{k,i,t} \leq N_k \cdot z \quad \forall k = 1, \ldots, K$$
 #### Constraints for binary variables
 $$x_{k,i,t} \in \\{0, 1\\} \quad \forall k = 1, \ldots, K; \forall i = 1, \ldots, N_k; \forall t = 1, \ldots, T$$
+
+## Build
+To build the client run `npm run build`.
+
+To start the solver (used only for ILP solver) `uvicorn app:app --host 0.0.0.0 --port 8000 --reload`
+
